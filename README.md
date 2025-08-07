@@ -35,9 +35,12 @@ We appreciate your interest and your patience.
 If you wish to cite this work, please refer to the following BibTeX entry (temporary, subject to update upon publication):
 
 ```bibtex
-@article{caligiuri2025fedpromo,
-  title={FedPromo: Federated Lightweight Proxy Models At The Edge Bring New Domains To Foundation Models},
-  author={Caligiuri, Matteo and Others},
-  journal={arXiv preprint arXiv:XXXXXXXX},
-  year={2025}
+@misc{caligiuri2025fedpromofederatedlightweightproxy,
+      title={FedPromo: Federated Lightweight Proxy Models at the Edge Bring New Domains to Foundation Models}, 
+      author={Matteo Caligiuri and Francesco Barbato and Donald Shenaj and Umberto Michieli and Pietro Zanuttigh},
+      year={2025},
+      eprint={2508.03356},
+      archivePrefix={arXiv},
+      primaryClass={cs.CV},
+      url={https://arxiv.org/abs/2508.03356},
 }
