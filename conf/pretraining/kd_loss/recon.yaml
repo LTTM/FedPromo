@@ -1,0 +1,5 @@
+_target_: modules.VectorReconstructionLoss
+reduction: mean
+lambda_mse: 1.
+lambda_l1: 1.
+lambda_cos: 1.

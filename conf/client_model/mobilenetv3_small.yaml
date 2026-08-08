@@ -1,0 +1,4 @@
+_target_: modules.initialize_mobilenetv3
+size: small
+weight: imagenet1k_v1
+n_layers_translator: 1

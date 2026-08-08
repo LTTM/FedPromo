@@ -1,0 +1,24 @@
+# _target_: flwr.server.strategy.DifferentialPrivacyServerSideAdaptiveClipping
+_target_: modules.federated.strategies.DifferentialPrivacyServerSideAdaptiveClipping
+
+# The noise multiplier for the Gaussian mechanism for model updates.
+noise_multiplier : 0.01
+
+# The number of clients that are sampled on each round.
+# num_sampled_clients: ${eval:'${num_clients_per_round_fit} // 3'}
+num_sampled_clients: ${num_clients_per_round_fit}
+
+# The initial value of clipping norm. Defaults to 0.1.
+# Andrew et al. recommends to set to 0.1.
+initial_clipping_norm : 0.1
+
+# The desired quantile of updates which should be clipped. Defaults to 0.5.
+target_clipped_quantile : 0.5
+
+# The learning rate for the clipping norm adaptation. Defaults to 0.2.
+# Andrew et al. recommends to set to 0.2.
+clip_norm_lr : 0.2
+
+# The standard deviation of the noise added to the count of updates below the estimate.
+# Andrew et al. recommends to set to `expected_num_records/20`
+clipped_count_stddev : null

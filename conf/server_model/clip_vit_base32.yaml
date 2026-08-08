@@ -1,0 +1,2 @@
+_target_: modules.instantiate_clip
+pretrained_model: ViT-B/32

@@ -1,0 +1,5 @@
+_target_: torchvision.transforms.v2.ToDtype
+dtype:
+  _target_: modules.dtypes
+  dtype: float32
+scale: True

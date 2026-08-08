@@ -1,0 +1,108 @@
+---
+
+# MobileNetV3 Proxy Model Configuration
+# This configuration file is specifically designed for testing and evaluating
+# MobileNetV3 lightweight proxy models independently from the federated pipeline
+
+# Model and experiment identification
+model_name: mobilenetv3_small  # MobileNetV3 model variant to use (small or large)
+random_seed: 42  # Seed for reproducible random number generation
+
+# Data and storage paths
+data_folder: ./data  # Local data folder for checkpoints and embeddings
+dts_root_dir: ${data_folder}/  # Root directory where datasets are stored (trailing slash required)
+
+# Model architecture configuration
+feats_size: 2_048  # Feature size for the model backbone
+
+# Checkpoint configuration for model loading
+checkpoint: null  # Set to null to train from scratch, or configure as below:
+# checkpoint:
+#   path: /path/to/your/checkpoint.pth  # Path to checkpoint file
+#   module2load: main  # Which module to load (main, head, all)
+#   ignore_scheduler: True  # Whether to ignore scheduler state from checkpoint
+
+# Training control settings
+resume_train: False  # Resume training from checkpoint
+proto_train: False  # Enable prototype-based training (experimental)
+eval_only: False  # Only evaluate, don't train (set to True for inference only)
+epochs: 50  # Number of training epochs
+batch_size: 64  # Batch size for training and evaluation
+eval_every: 10  # Run evaluation every N epochs
+log_every: 50  # Log training metrics every N steps
+early_stopping: False  # Enable early stopping based on validation metrics
+module2train: head  # Which module to train (main, head, all)
+
+# Experiment tracking and logging configuration
+# MLFlow setup for experiment tracking (set to null to disable)
+mlflow: null  # Disable MLflow tracking by default
+# mlflow:
+#   _target_: modules.instantiate_mlflow
+#   tracking_uri: <mlflow_server_url>  # MLflow server URL
+#   experiment_name: <experiment_name>  # Name for your experiment
+#   experiment_description: <experiment_description>  # Description of the experiment
+#   experiment_tags:
+#     project_name: <project_name>  # Project identifier
+#     company_partner: <partner_name>  # Partner/organization name
+#   run_name: <run_name>  # Specific run name (null for auto-generated)
+
+# Data transformation pipelines
+# Training transformations (deterministic for proxy model evaluation)
+train_data_tr:
+  _target_: modules.conf2compose
+  pil_to_tensor: ${pil_to_tensor}  # Convert PIL images to tensors
+  rgb: ${rgb}  # Ensure RGB format
+  to_dtype: ${to_dtype}  # Convert to appropriate data type
+  normalize: ${normalize}  # Normalize pixel values
+  resize: ${resize}  # Resize images to target size
+  center_crop: ${center_crop}  # Center crop to final size
+
+# Validation/test transformations (same as training for proxy models)
+val_data_tr:
+  _target_: modules.conf2compose
+  pil_to_tensor: ${pil_to_tensor}  # Convert PIL images to tensors
+  rgb: ${rgb}  # Ensure RGB format
+  to_dtype: ${to_dtype}  # Convert to appropriate data type
+  normalize: ${normalize}  # Normalize pixel values
+  resize: ${resize}  # Resize images to target size
+  center_crop: ${center_crop}  # Center crop to final size
+
+#################################################################
+
+# Hydra framework configuration for output directories and job management
+hydra:
+  run:  # Single run configuration
+    dir: ./outputs_${model_name}/${now:%d-%m-%Y}/${now:%H-%M-%S-%f}  # Output directory with timestamp
+  sweep:  # Multi-run/sweep configuration
+    dir: multirun_${model_name}/${now:%d-%m-%Y}/${now:%H-%M-%S-%f}  # Sweep output directory
+    subdir: ${hydra.job.num}  # Subdirectory for each job in sweep
+
+#################################################################
+
+# Default configuration components - these define the complete experiment setup
+defaults:
+  - _self_  # Include this config file itself
+  # Model architecture selection
+  - client_model: mobilenetv3_small  # MobileNetV3 proxy model configuration
+  - classifier: single  # Classifier head configuration (single = standard classification head)
+
+  # Data transformation components
+  - transforms/pil_to_tensor@pil_to_tensor
+  - transforms/rgb@rgb
+  - transforms/to_dtype@to_dtype
+  - transforms/normalize@normalize
+  - transforms/resize@resize
+  - transforms/center_crop@center_crop
+  - transforms/autoaugment@auto_augment  # Automatic augmentation (not used in current transforms)
+  - transforms/random_erase@random_erase  # Random erasing augmentation (not used in current transforms)
+  - transforms/random_crop@random_crop  # Random crop augmentation (not used in current transforms)
+
+  # Dataset and training configuration
+  - pretraining/dts: compcars  # Dataset to use for training/evaluation
+  # Available datasets: compcars, stanfordcars, cub_200, nabirds, fgvc_aircraft, oxford_pets, stanford_dogs, uecfood_256
+  - pretraining/optim: adam  # Optimizer configuration
+  - pretraining/scheduler: cosine  # Learning rate scheduler (cosine annealing)
+  - pretraining/loss: cross_entropy  # Loss function for classification
+  - pretraining/prototype_distance: mse  # Distance metric for prototype learning (if enabled)
+
+  - override hydra/job_logging: custom  # Custom logging configuration

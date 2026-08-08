@@ -1,0 +1,207 @@
+---
+
+# General configuration options
+random_seed: 42  # Seed for reproducible random number generation
+# Path containg the datasets folder
+# if it does not exists it will be automatically
+# generated inside the given path
+dts_root_dir: ${data_folder}/  # Root directory where datasets are stored
+data_folder: ./data  # Local data folder for checkpoints and embeddings
+
+# Authentication token for Huggingface datasets (optional)
+# huggingface_token: null
+
+# Data transformation pipelines for pretraining
+pretrain_data_tr:
+  _target_: modules.common.conf2precompose
+  client_tr:  # Client-side training transformations (with augmentations)
+    pil_to_tensor: ${pil_to_tensor}
+    rgb: ${rgb}
+    to_dtype: ${to_dtype}
+    normalize: ${normalize}
+    random_crop: ${random_crop}
+    auto_augment: ${auto_augment}
+    random_erase: ${random_erase}
+  server_tr:  # Server-side training transformations (deterministic)
+    pil_to_tensor: ${pil_to_tensor}
+    rgb: ${rgb}
+    to_dtype: ${to_dtype}
+    normalize: ${normalize}
+    resize: ${resize}
+    center_crop: ${center_crop}
+
+# Data transformation pipeline for validation/testing
+val_data_tr:
+  _target_: modules.conf2compose
+  pil_to_tensor: ${pil_to_tensor}
+  rgb: ${rgb}
+  to_dtype: ${to_dtype}
+  normalize: ${normalize}
+  resize: ${resize}
+  center_crop: ${center_crop}
+
+# Experiment tracking and logging configuration
+# MLFlow setup
+mlflow: null  # Experiment tracking system (null = use Tensorboard instead)
+# if set as follows it will log everything to an mlflow server
+# if you use an mlflow server remember to set the credentials file
+# see mlflow docs
+# (must be provided)
+# mlflow:
+#   _target_: modules.instantiate_mlflow
+#   tracking_uri: <ml_flow_server_url>
+#   experiment_name: <ml_flow_experiment_name>
+#   experiment_description: <ml_flow_experiment_description>
+#   experiment_tags:
+#     project_name: <ml_flow_project_name>
+#     company_partner: <company_partner_name>  # could be removed
+#   run_name: null  # set a name or leave null to default
+
+
+#################################################################
+
+
+# Pre-training phase configuration options
+
+# Execution control settings
+pretraining_eval_only: False  # Skip training and only run evaluation
+resume_pretraining: False  # Resume from a checkpoint
+pretraining_early_stopping: False  # Enable early stopping based on validation metrics
+pretraining_checkpoint:  # Checkpoint to load for pretraining (set to null to start from scratch)
+  path: ${data_folder}/checkpoints/pre-train/cars.pth
+  module2load: main  # Which module to load from checkpoint (main, head, all)
+pretraining_module2train: all  # Which module to train (main, head, all)
+
+# Logging and evaluation frequency
+pretraining_log_every: 10  # Log training metrics every N steps
+pretraining_eval_every: 5  # Run validation every N epochs
+
+# Loss function configuration
+pretrain_loss_weight: .5 # cross entropy weight
+pretrain_kd_loss_weight: 1. # knowledge distillation weight
+
+# Training schedule configuration
+pretraining_epochs: 60  # Total number of pretraining epochs
+pretraining_batch_size: 64  # Batch size for pretraining
+
+# Performance and resource settings
+pretraining_max_epoch_iters: null  # Max iterations per epoch (null = full epoch, set number to limit)
+pretraining_dataloader_workers: 8  # Number of parallel data loading workers
+
+#################################################################
+
+
+# Federated learning configuration options
+
+# Execution control settings
+skip_fed: False  # Skip federated learning phase entirely
+fed_eval_only: False # if True set federated_checkpoint.module2load = all  # Only evaluate, don't train
+federated_checkpoint:  # Checkpoint to load for federated learning (set to null to start from scratch)
+  path: ${pretraining_checkpoint.path}  # Use the pretraining checkpoint previously computed
+  module2load: all  # Which module to load from checkpoint (main, head, all)
+
+# Training configuration
+batch_size: 64  # Batch size for federated training
+num_clients: 100  # Total number of clients in the federation
+num_clients_per_round_fit: 10  # Number of clients participating in each training round
+num_clients_per_round_eval: 0  # Number of clients participating in evaluation (0 = all)
+num_rounds: 500  # Total number of federated learning rounds
+num_local_epochs: 10  # Number of local epochs each client trains per round
+fed_module2train: head # all main head  # Which module to train (main, head, all)
+fed_lr: 0.005  # Learning rate for federated training
+federated_dataloader_workers: 4  # Number of parallel data loading workers
+
+# Evaluation and logging settings
+fed_eval_every_round: 10  # Evaluate model every N rounds
+fed_server_class_debias: True  # Enable class debiasing on server side
+fed_server_class_debias_weight: 1.  # Weight for server-side class debiasing loss
+fed_client_class_debias: True  # Enable class debiasing on client side
+fed_client_class_debias_weight: 1.  # Weight for client-side class debiasing loss
+
+# Client training configuration (passed to clients during fit)
+config_fit:
+  lr: ${fed_lr}  # Learning rate for client training
+  scheduler_tot_rounds: ${num_rounds}  # Total rounds for learning rate scheduling
+  use_lr_scheduler: True  # Enable learning rate scheduling
+  module2train: ${fed_module2train}  # Which module to train
+  local_epochs: ${num_local_epochs}  # Local training epochs per round
+  class_debias: ${fed_client_class_debias}  # Enable class debiasing
+  class_debias_weight: ${fed_client_class_debias_weight}  # Class debiasing weight
+  # For moon client
+  mu: 0.1  # MOON algorithm regularization parameter
+  temperature: 1  # Temperature for contrastive learning in MOON
+  # For ICP client
+  ema_decay: 0.05  # Exponential moving average decay rate
+  # FedProx
+  proximal_mu: 1.0  # FedProx proximal term weight
+
+config_eval: null  # Client evaluation configuration (set to null to use defaults)
+
+# Debugging and analysis settings
+plot_label_distribution: False  # Generate plots showing label distribution across clients
+log_clients_print: True  # Print detailed client training logs
+save_fed_model_interval: 10  # Save federated model every N rounds
+
+
+#################################################################
+
+
+# Hydra framework configuration for output directories and job management
+hydra:
+  run:  # Single run configuration
+    dir: ./outputs/${now:%d-%m-%Y}/${now:%H-%M-%S-%f}  # Output directory with timestamp if you want, you can change it
+  sweep:  # Multi-run/sweep configuration
+    dir: multirun/${now:%d-%m-%Y}/${now:%H-%M-%S-%f}  # Sweep output directory
+    subdir: ${hydra.job.num}  # Subdirectory for each job in sweep
+
+
+#################################################################
+
+
+# Default configuration components - these define the complete experiment setup
+defaults:
+  - _self_  # Include this config file itself
+  # Model architecture selection
+  - server_model: dinov2_vit_large14_reg  # Foundation model used on server
+  - client_model: mobilenetv3_small  # Lightweight model used on clients
+  - classifier: single  # Classifier head configuration
+
+  # Data transformation components
+  - transforms/pil_to_tensor@pil_to_tensor
+  - transforms/rgb@rgb
+  - transforms/to_dtype@to_dtype
+  - transforms/normalize@normalize
+  - transforms/resize@resize
+  - transforms/center_crop@center_crop
+  - transforms/autoaugment@auto_augment
+  - transforms/random_erase@random_erase
+  - transforms/random_crop@random_crop
+
+  # Pretraining configuration components
+  - pretraining/dts@pretrain_dts: stanfordcars  # Dataset for pretraining
+  # Available datasets:
+  # mnist, imagenet, inaturalist_2018, central_asian_food
+  # stanfordcars -> compcars (or compcars_years)
+  # food101 -> uecfood_256
+  # cub_200 -> nabirds
+  # fgvc_aircraft -> military_aircraft
+  # oxford_pets -> stanford_dogs
+  - pretraining/dts_a1: null  # Additional dataset 1 (auxiliary) - set to null to disable
+  - pretraining/dts_a2: null  # Additional dataset 2 (auxiliary) - set to null to disable
+  - pretraining/kd_loss: recon  # Knowledge distillation loss type
+  - pretraining/loss: cross_entropy  # Main pretraining loss function
+  - pretraining/optim: adam  # Optimizer for pretraining
+  - pretraining/scheduler: cosine  # Learning rate scheduler for pretraining
+
+  # Federated learning configuration components
+  - federated/dts: compcars  # Dataset for federated learning
+  - federated/partitioner: dirichlet_compcars  # Data partitioning strategy across clients
+  - federated/loss: cross_entropy  # Loss function for federated training
+  - federated/optim: adam  # Optimizer for federated training
+  - federated/client_type: icp  # Client algorithm type (options: base, ema, moon, icp, fedprox)
+  - federated/strategy: fedavg  # Federated aggregation strategy (options: fedavg, fedalign, fedhpa)
+  # Differential privacy settings
+  - federated/client_dp: null  # Client-side differential privacy (set to null to disable, options: local_dp_compcars)
+  - federated/server_dp: null  # Server-side differential privacy (set to null to disable, options: fixed_clipping, adaptive_clipping)
+
+  - override hydra/job_logging: custom  # Custom logging configuration

@@ -1,0 +1,5 @@
+_target_: modules.DirichletPartitioner
+num_partitions: ${num_clients}
+self_balancing: True
+min_partition_size: 70
+alpha: 0.01

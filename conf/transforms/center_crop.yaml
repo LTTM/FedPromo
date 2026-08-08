@@ -1,0 +1,2 @@
+_target_: torchvision.transforms.v2.CenterCrop
+size: [224, 224]

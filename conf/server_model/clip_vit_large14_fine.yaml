@@ -1,0 +1,2 @@
+_target_: modules.instantiate_clip_fine
+checkpoint_path: checkpoints/CLIP/fine_tuned_clip_best.pth

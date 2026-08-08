@@ -1,0 +1,4 @@
+_target_: modules.instantiate_dinov2
+pretrained_model: dinov2_vitl14_reg
+n_classes: 112
+n_layers: 1

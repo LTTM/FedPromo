@@ -1,0 +1,5 @@
+name: ImageNetPets
+type: torch
+data_dir: ${dts_root_dir}datasets/ImageNetPets_torch
+download: True
+splits: ["train", "val"]

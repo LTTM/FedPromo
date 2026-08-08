@@ -1,0 +1,17 @@
+_target_: flwr.server.strategy.FedAvg
+p_client_dropout: 0.0
+fraction_fit: 0.00001
+min_fit_clients: ${num_clients_per_round_fit}
+fraction_evaluate: 0.00001
+min_evaluate_clients: ${num_clients_per_round_eval}
+min_available_clients: ${num_clients}
+fit_metrics_aggregation_fn:
+  _target_: modules.get_fit_metrics_aggregation_fn
+evaluate_metrics_aggregation_fn:
+  _target_: modules.get_fit_metrics_aggregation_fn
+on_fit_config_fn:
+  _target_: modules.get_on_fit_config
+  config: ${config_fit}
+on_evaluate_config_fn:
+  _target_: modules.get_on_evaluate_config
+  config: ${config_eval}

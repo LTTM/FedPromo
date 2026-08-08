@@ -1,0 +1,5 @@
+name: CUB200
+type: torch
+data_dir: ${dts_root_dir}datasets/CUB200_torch
+download: True
+splits: ["train", "val"]

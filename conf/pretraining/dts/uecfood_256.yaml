@@ -1,0 +1,5 @@
+name: UECFOOD256
+type: torch
+data_dir: ${dts_root_dir}datasets/UECFOOD256_torch
+download: True
+splits: ["train", "val"]

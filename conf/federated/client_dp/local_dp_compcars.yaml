@@ -1,0 +1,50 @@
+_target_: modules.federated.clients.mod.LocalDpMod
+
+# Local DP knowlwdge is extracted from the following two paper:
+# https://dl.acm.org/doi/10.1145/2976749.2978318
+# https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9069945
+
+# q = sampling probability -> number _of_active_client / total_clients
+# => q = 1/10
+
+# T = num_rounds
+# => T = 500
+
+# From these value we can assume that the 0 < epsilon < c1 * q^2 * T
+# => 0 < epsilon < c1 * 5
+
+# sigma = gaussian noise std
+# sigma >= c2 * sensitivity * (q / epsilon) * sqrt(-T * ln(delta))
+
+
+# sensitivty = clipping_norm
+# or
+# sensitivity = 2 * clipping_norm / minimum_size_of_local_dts
+
+
+# Clipping norm setup
+# The clipping norm at each round is computed as follows:
+# if clipping_norm_scheduler is False:
+#   round_clipping_norm = clipping_norm
+# else:
+#   round_clipping_norm = scheduler(clipping_norm, round_number)
+#   if scheduler_max_clipping_norm > 0:
+#     round_clipping_norm = min(round_clipping_norm, scheduler_max_clipping_norm)
+# If there is no lr_scheduler no scheduling will be applied to clipping norm
+clipping_norm_scheduler: True
+clipping_norm: 26.94474671 # with CDB enabled
+scheduler_max_clipping_norm: 12.58343 # if non-zero adaptive clipping norm will be max-clipped to this value
+
+# Number of sample in the smallest local dataset
+min_Ds_size: 130 # if 0 uses hard bounds on sensitivity, else uses soft
+
+# The privacy budget.
+# Smaller value of epsilon indicates a higher level of privacy protection.
+epsilon: 5
+# epsilon: ${eval:"float('inf')"}
+
+# The failure probability.
+# The probability that the privacy mechanism
+# fails to provide the desired level of privacy.
+# A smaller value of delta indicates a stricter privacy guarantee.
+delta: 1e-5

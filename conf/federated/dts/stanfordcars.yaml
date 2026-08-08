@@ -1,0 +1,5 @@
+name: StanfordCars
+type: torch
+data_dir: ${dts_root_dir}datasets/StanfordCars_torch
+download: True
+splits: ["train", "val"]

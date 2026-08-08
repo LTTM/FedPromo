@@ -1,0 +1,2 @@
+_target_: torchvision.transforms.v2.RandomErasing
+p: 0.2

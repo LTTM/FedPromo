@@ -1,0 +1,13 @@
+# _target_: flwr.server.strategy.DifferentialPrivacyClientSideFixedClipping
+_target_: modules.federated.strategies.DifferentialPrivacyClientSideFixedClipping
+
+# The noise multiplier for the Gaussian mechanism for model updates.
+# A value of 1.0 or higher is recommended for strong privacy.
+noise_multiplier : 1.0
+
+# The value of the clipping norm.
+clipping_norm : 0.8
+
+# The number of clients that are sampled on each round.
+# num_sampled_clients: ${eval:'${num_clients_per_round_fit} // 3'}
+num_sampled_clients: ${num_clients_per_round_fit}

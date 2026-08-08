@@ -1,0 +1,5 @@
+name: Food101
+type: torch
+data_dir: ${dts_root_dir}datasets/Food101_torch
+download: True
+splits: ["train", "val"]

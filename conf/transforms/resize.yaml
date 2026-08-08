@@ -1,0 +1,5 @@
+_target_: torchvision.transforms.v2.Resize
+size: 224
+interpolation:
+  _target_: modules.interpolation_mode
+  mode: bilinear

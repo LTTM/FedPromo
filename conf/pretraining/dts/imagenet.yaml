@@ -1,0 +1,4 @@
+name: ImageNet
+type: torch
+data_dir: ${dts_root_dir}datasets/ImageNet-1k_torch
+splits: [train, val]
